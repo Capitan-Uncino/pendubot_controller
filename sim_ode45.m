@@ -9,7 +9,8 @@ syms x1 x2 x3 x4 u   % alpha1, alpha2, dalpha1/dt, dalpha2/dt
 
 x = [x1; x2; x3; x4];
 n = length(x);
-x_ini = [pi/24; 0; 0; 0];
+x_ini = [pi/3; 0; 0; 0];
+Tend = 1;
 
 p1=0.0148;%kg m^2
 p2=0.0051;
@@ -49,29 +50,28 @@ B = double(vpa(subs(jacobian(fx + gx*u, u), x, x_e), 3));
 C = eye(n);
 D = zeros(n,1);
 
-eig_A = eig(A)
+eig_A = eig(A);
 
 omega_n = abs(eig_A);
 
-omega_fast = max(omega_n)
+omega_fast = max(omega_n);
 
 
 f_fast = omega_fast / (2*pi);  
-f_s    = 10 * f_fast            % sampling frequency (Hz)
-Ts     = 1 / f_s                % sampling period (s)
+f_s    = 10 * f_fast;            % sampling frequency (Hz)
+Ts     = 1 / f_s;                % sampling period (s)
 
 sys_c = ss(A, B, C, D);
 
 sys_d = c2d(sys_c, Ts, 'zoh');
 
-[Ad, Bd, Cd, Dd] = ssdata(sys_d)
+[Ad, Bd, Cd, Dd] = ssdata(sys_d);
 
 %% ---------------------------------------------------------------
 %% SIMULATION OF LINEAR SYSTEM x_dot = A x + B u
 %% ---------------------------------------------------------------
 
 % Simulation parameters
-Tend = 0.3;
 dt = 0.001;
 tspan = 0:dt:Tend;
 
@@ -100,7 +100,6 @@ X = X + repmat(x_e', size(X,1), 1);
 
 
 % Simulation parameters
-Tend = 0.3;
 dt = 0.001;
 tspan = 0:dt:Tend;
 
