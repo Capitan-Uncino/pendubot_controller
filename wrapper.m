@@ -33,6 +33,16 @@ function wrapper(script_name)
         error("Symbolic package is required but not found.");
     end
 
+        % ---------------------------------------------------------------------
+    % Load control pkg
+    % ---------------------------------------------------------------------
+    try
+        pkg load control;
+        fprintf("Loaded control package.\n");
+    catch
+        error("Control package is required but not found.");
+    end
+
     % ---------------------------------------------------------------------
     % Reduce SymPy / Octave spam
     % ---------------------------------------------------------------------

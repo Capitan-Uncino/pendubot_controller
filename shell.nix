@@ -1,11 +1,6 @@
-
-{ pkgs ? import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/25.05.tar.gz";
-  }) { config.allowUnfree = true; }
-}:
-
+{ pkgs ? import <nixpkgs> {} }:
 let
-  python = pkgs.python312;
+  python = pkgs.python313;
   pythonPkgs = python.pkgs;
 in
 
