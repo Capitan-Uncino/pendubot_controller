@@ -8,7 +8,8 @@ syms x1 x2 x3 x4 u   %alpha1, alpha2, dalpha1/dt, dalpha2/dt
 
 x = [x1; x2; x3; x4];
 n = length(x);
-x_ini = [pi; pi; 0; 0];
+x_ini = [pi/24; 0; 0; 0];
+x_ref = [4/3*pi; pi; 0; 0];
 
 p1=0.0148;%kg m^2
 p2=0.0051;
@@ -40,8 +41,7 @@ gx = [0; 0; M\[k; 0]];
 % S = solve(eqns, [x1 x2 x3 x4 u])
 
 % Linearization for equilibrium point x_e and input u_e
-x_e = [pi/3; 0; 0; 0];
-x_ref = [4/3*pi; pi; 0; 0];
+x_e = [0; 0; 0; 0];
 % x_dot = fx + gx*u == 0;
 % eqn = fx + gx*u == 0;
 eqns = [x3 == 0; x4 == 0; M\(-Vm*[x3; x4]-G) + M\[k; 0]*u == 0];
