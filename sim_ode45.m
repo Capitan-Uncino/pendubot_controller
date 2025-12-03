@@ -9,7 +9,7 @@ syms x1 x2 x3 x4 u   % alpha1, alpha2, dalpha1/dt, dalpha2/dt
 
 x = [x1; x2; x3; x4];
 n = length(x);
-x_ini = [pi/3; 0; 0; 0];
+x_ini = [pi+pi/24; pi; 0; 0];
 Tend = 1;
 
 p1=0.0148;%kg m^2
@@ -37,7 +37,7 @@ fx = [x3; x4; M\(-Vm*[x3; x4]-G)];
 gx = [0; 0; M\[k; 0]];
 
 % Linearization point
-x_e = [0; 0; 0; 0];
+x_e = [pi; pi; 0; 0];
 
 % Solve for equilibrium input
 eqns = [x3 == 0; x4 == 0; M\(-Vm*[x3; x4]-G) + M\[k; 0]*u == 0];
@@ -50,22 +50,7 @@ B = double(vpa(subs(jacobian(fx + gx*u, u), x, x_e), 3));
 C = eye(n);
 D = zeros(n,1);
 
-eig_A = eig(A);
 
-omega_n = abs(eig_A);
-
-omega_fast = max(omega_n);
-
-
-f_fast = omega_fast / (2*pi);  
-f_s    = 10 * f_fast;            % sampling frequency (Hz)
-Ts     = 1 / f_s;                % sampling period (s)
-
-sys_c = ss(A, B, C, D);
-
-sys_d = c2d(sys_c, Ts, 'zoh');
-
-[Ad, Bd, Cd, Dd] = ssdata(sys_d);
 
 %% ---------------------------------------------------------------
 %% SIMULATION OF LINEAR SYSTEM x_dot = A x + B u
@@ -76,7 +61,7 @@ dt = 0.001;
 tspan = 0:dt:Tend;
 
 % Define input: constant equilibrium input
-u_fun = @(t) -u_e;
+u_fun = @(t,x) -u_e;
 
 % Linear system dynamics for ode45
 lin_dyn = @(t, x) A*(x - x_e) + B*u_fun(t);
@@ -104,7 +89,7 @@ dt = 0.001;
 tspan = 0:dt:Tend;
 
 % Define input: constant equilibrium input
-u_fun = @(t) 0;
+u_fun = @(t,x) 0;
 
 
 
@@ -122,39 +107,117 @@ x0 = x_ini;   % use your original initial state
 [t_nonlinear, X_nonlinear] = ode45(@(t,x) dyn(t,x,u_fun(t)), tspan, x0);
 
 
+%% ---------------------------------------------------------------
+%% SIMULATION OF DISCRETIZED SYSTEM
+%% ---------------------------------------------------------------
 
+
+eig_A = eig(A);
+
+omega_n = abs(eig_A);
+
+omega_fast = max(omega_n);
+
+
+f_fast = omega_fast / (2*pi)  
+f_s    = 10 * f_fast
+Ts     =  floor(1 / f_s * 100) / 100
+
+sys_c = ss(A, B, C, D);
+
+sys_d = c2d(sys_c, Ts, 'zoh');
+
+[Ad, Bd, Cd, Dd] = ssdata(sys_d);
+
+
+N = floor(Tend/Ts) + 1;  
+t_discrete = (0:N-1)*Ts;
+
+
+X_discrete = zeros(N, size(Ad,1));
+U_discrete = zeros(N, 1);
+
+x = x_ini- x_e;
+
+  u_fun = @(x,t) -u_e;  
+
+for k = 1:N
+    t_curr = (k-1)*Ts;       
+    X_discrete(k,:) = x;         
+    
+    u = u_fun(x, t_curr);    
+    U_hist(k,:) = u;         
+    
+    x = Ad*x + Bd*u;          
+end
+
+X_discrete = X_discrete + repmat(x_e', size(X_discrete,1), 1);
 
 %% ---------------------------------------------------------------
 %% PLOTTING
 %% ---------------------------------------------------------------
 
-figure;
-subplot(2,2,1)
+
+
+scale_angles = pi;        % example values → choose your own
+scale_velocities = 5.0;
+
+figure(1);
+subplot(2,1,1)
+plot(t_nonlinear, X_nonlinear(:,1), 'LineWidth', 1.6); hold on
+plot(t_nonlinear, X_nonlinear(:,2), 'LineWidth', 1.6);
+legend('\alpha_0','\alpha_2')
+ylabel('Angle [rad]')
+title('Pendubot Angles')
+ylim([-scale_angles scale_angles])    % <-- SET SCALE
+
+subplot(2,1,2)
+plot(t_nonlinear, X_nonlinear(:,3), 'LineWidth', 1.6); hold on
+plot(t_nonlinear, X_nonlinear(:,4), 'LineWidth', 1.6);
+legend('d\alpha_0','d\alpha_2')
+ylabel('Angular Velocity [rad/s]')
+xlabel('Time [s]')
+title('Pendubot Angular Velocities')
+ylim([-scale_velocities scale_velocities])   % <-- SET SCALE
+
+
+
+figure(2);
+subplot(2,1,1)
 plot(t, X(:,1), 'LineWidth', 1.6); hold on
 plot(t, X(:,2), 'LineWidth', 1.6);
 legend('\alpha_1','\alpha_2')
 ylabel('Angle [rad]')
 title('Pendubot Angles (Linearized Model)')
+ylim([-scale_angles scale_angles])    % <-- SET SCALE
 
-subplot(2,2,2)
+subplot(2,1,2)
 plot(t, X(:,3), 'LineWidth', 1.6); hold on
 plot(t, X(:,4), 'LineWidth', 1.6);
 legend('d\alpha_1','d\alpha_2')
 ylabel('Angular Velocity [rad/s]')
 xlabel('Time [s]')
 title('Pendubot Angular Velocities (Linearized Model)')
+ylim([-scale_velocities scale_velocities])    % <-- SET SCALE
 
-subplot(2,2,3)
-plot(t, X_nonlinear(:,1), 'LineWidth', 1.6); hold on
-plot(t, X_nonlinear(:,2), 'LineWidth', 1.6);
+
+
+
+figure(3);
+subplot(2,1,1)
+plot(t_discrete, X_discrete(:,1), 'LineWidth', 1.6); hold on
+plot(t_discrete, X_discrete(:,2), 'LineWidth', 1.6);
 legend('\alpha_1','\alpha_2')
 ylabel('Angle [rad]')
-title('Pendubot Angles')
+title('Pendubot Angles (Discretized Model)')
+ylim([-scale_angles scale_angles])    % <-- SET SCALE
 
-subplot(2,2,4)
-plot(t, X_nonlinear(:,3), 'LineWidth', 1.6); hold on
-plot(t, X_nonlinear(:,4), 'LineWidth', 1.6);
+subplot(2,1,2)
+plot(t_discrete, X_discrete(:,3), 'LineWidth', 1.6); hold on
+plot(t_discrete, X_discrete(:,4), 'LineWidth', 1.6);
 legend('d\alpha_1','d\alpha_2')
 ylabel('Angular Velocity [rad/s]')
 xlabel('Time [s]')
-title('Pendubot Angular Velocities')
+title('Pendubot Angular Velocities (Discretized Model)')
+ylim([-scale_velocities scale_velocities])   % <-- SET SCALE
+
