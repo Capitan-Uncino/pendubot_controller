@@ -9,7 +9,7 @@ syms x1 x2 x3 x4 u   % alpha1, alpha2, dalpha1/dt, dalpha2/dt
 
 x = [x1; x2; x3; x4];
 n = length(x);
-x_ini = [pi+pi/24; pi; 0; 0];
+x_ini = [pi+pi/6; pi; 0; 0];
 Tend = 1;
 
 p1=0.0148;%kg m^2
@@ -159,8 +159,8 @@ X_discrete = X_discrete + repmat(x_e', size(X_discrete,1), 1);
 
 
 
-scale_angles = pi;        % example values → choose your own
-scale_velocities = 5.0;
+scale_angles = 2*pi;        % example values → choose your own
+scale_velocities = 10.0;
 
 figure(1);
 subplot(2,1,1)
