@@ -10,7 +10,7 @@ syms x1 x2 x3 x4 u   % alpha1, alpha2, dalpha1/dt, dalpha2/dt
 x = [x1; x2; x3; x4];
 n = length(x);
 x_ini = [pi+pi/6; pi; 0; 0];
-Tend = 1;
+Tend = 10;
 
 p1=0.0148;%kg m^2
 p2=0.0051;
@@ -137,9 +137,14 @@ t_discrete = (0:N-1)*Ts;
 X_discrete = zeros(N, size(Ad,1));
 U_discrete = zeros(N, 1);
 
+Q = diag([1,1,1,1])
+R = 1
+
+K = dlqr(Ad,Bd,Q,R)
+
 x = x_ini- x_e;
 
-  u_fun = @(x,t) -u_e;  
+  u_fun = @(x,t) -K*x -u_e;  
 
 for k = 1:N
     t_curr = (k-1)*Ts;       
@@ -158,66 +163,80 @@ X_discrete = X_discrete + repmat(x_e', size(X_discrete,1), 1);
 %% ---------------------------------------------------------------
 
 
+visualize_systems = [3]
 
-scale_angles = 2*pi;        % example values → choose your own
-scale_velocities = 10.0;
+  scale_angles_low = 2; 
+  scale_angles_high = 4;
+  scale_velocities_low = -2;
+  scale_velocities_high = 2;
 
-figure(1);
-subplot(2,1,1)
-plot(t_nonlinear, X_nonlinear(:,1), 'LineWidth', 1.6); hold on
-plot(t_nonlinear, X_nonlinear(:,2), 'LineWidth', 1.6);
-legend('\alpha_0','\alpha_2')
-ylabel('Angle [rad]')
-title('Pendubot Angles')
-ylim([-scale_angles scale_angles])    % <-- SET SCALE
 
-subplot(2,1,2)
-plot(t_nonlinear, X_nonlinear(:,3), 'LineWidth', 1.6); hold on
-plot(t_nonlinear, X_nonlinear(:,4), 'LineWidth', 1.6);
-legend('d\alpha_0','d\alpha_2')
-ylabel('Angular Velocity [rad/s]')
-xlabel('Time [s]')
-title('Pendubot Angular Velocities')
-ylim([-scale_velocities scale_velocities])   % <-- SET SCALE
+if any(ismember(visualize_systems, 1))
 
 
 
-figure(2);
-subplot(2,1,1)
-plot(t, X(:,1), 'LineWidth', 1.6); hold on
-plot(t, X(:,2), 'LineWidth', 1.6);
-legend('\alpha_1','\alpha_2')
-ylabel('Angle [rad]')
-title('Pendubot Angles (Linearized Model)')
-ylim([-scale_angles scale_angles])    % <-- SET SCALE
+  figure(1);
+  subplot(2,1,1)
+  plot(t_nonlinear, X_nonlinear(:,1), 'LineWidth', 1.6); hold on
+  plot(t_nonlinear, X_nonlinear(:,2), 'LineWidth', 1.6);
+  legend('\alpha_0','\alpha_2')
+  ylabel('Angle [rad]')
+  title('Pendubot Angles')
+  ylim([scale_angles_low scale_angles_high])    % <-- SET SCALE
 
-subplot(2,1,2)
-plot(t, X(:,3), 'LineWidth', 1.6); hold on
-plot(t, X(:,4), 'LineWidth', 1.6);
-legend('d\alpha_1','d\alpha_2')
-ylabel('Angular Velocity [rad/s]')
-xlabel('Time [s]')
-title('Pendubot Angular Velocities (Linearized Model)')
-ylim([-scale_velocities scale_velocities])    % <-- SET SCALE
+  subplot(2,1,2)
+  plot(t_nonlinear, X_nonlinear(:,3), 'LineWidth', 1.6); hold on
+  plot(t_nonlinear, X_nonlinear(:,4), 'LineWidth', 1.6);
+  legend('d\alpha_0','d\alpha_2')
+  ylabel('Angular Velocity [rad/s]')
+  xlabel('Time [s]')
+  title('Pendubot Angular Velocities')
+  ylim([scale_velocities_low scale_velocities_high])   % <-- SET SCALE
+
+end
+
+if any(ismember(visualize_systems, 2))
+
+  figure(2);
+  subplot(2,1,1)
+  plot(t, X(:,1), 'LineWidth', 1.6); hold on
+  plot(t, X(:,2), 'LineWidth', 1.6);
+  legend('\alpha_1','\alpha_2')
+  ylabel('Angle [rad]')
+  title('Pendubot Angles (Linearized Model)')
+  ylim([scale_angles_low scale_angles_high])    % <-- SET SCALE
+
+  subplot(2,1,2)
+  plot(t, X(:,3), 'LineWidth', 1.6); hold on
+  plot(t, X(:,4), 'LineWidth', 1.6);
+  legend('d\alpha_1','d\alpha_2')
+  ylabel('Angular Velocity [rad/s]')
+  xlabel('Time [s]')
+  title('Pendubot Angular Velocities (Linearized Model)')
+  ylim([scale_velocities_low scale_velocities_high])    % <-- SET SCALE
+
+end
+
+if any(ismember(visualize_systems, 3))
 
 
+  figure(3);
+  subplot(2,1,1)
+  plot(t_discrete, ones(length(X_discrete)).*pi, 'LineWidth', 1.6); hold on
+  plot(t_discrete, X_discrete(:,1), 'LineWidth', 1.6); hold on
+  plot(t_discrete, X_discrete(:,2), 'LineWidth', 1.6);
+  legend('\alpha_1','\alpha_2')
+  ylabel('Angle [rad]')
+  title('Pendubot Angles (Discretized Model)')
+  ylim([scale_angles_low scale_angles_high])    % <-- SET SCALE
 
+  subplot(2,1,2)
+  plot(t_discrete, X_discrete(:,3), 'LineWidth', 1.6); hold on
+  plot(t_discrete, X_discrete(:,4), 'LineWidth', 1.6);
+  legend('d\alpha_1','d\alpha_2')
+  ylabel('Angular Velocity [rad/s]')
+  xlabel('Time [s]')
+  title('Pendubot Angular Velocities (Discretized Model)')
+  ylim([scale_velocities_low scale_velocities_high])   % <-- SET SCALE
 
-figure(3);
-subplot(2,1,1)
-plot(t_discrete, X_discrete(:,1), 'LineWidth', 1.6); hold on
-plot(t_discrete, X_discrete(:,2), 'LineWidth', 1.6);
-legend('\alpha_1','\alpha_2')
-ylabel('Angle [rad]')
-title('Pendubot Angles (Discretized Model)')
-ylim([-scale_angles scale_angles])    % <-- SET SCALE
-
-subplot(2,1,2)
-plot(t_discrete, X_discrete(:,3), 'LineWidth', 1.6); hold on
-plot(t_discrete, X_discrete(:,4), 'LineWidth', 1.6);
-legend('d\alpha_1','d\alpha_2')
-ylabel('Angular Velocity [rad/s]')
-xlabel('Time [s]')
-title('Pendubot Angular Velocities (Discretized Model)')
-ylim([-scale_velocities scale_velocities])   % <-- SET SCALE
-
+end
