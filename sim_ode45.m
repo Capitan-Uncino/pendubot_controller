@@ -119,9 +119,9 @@ omega_n = abs(eig_A);
 omega_fast = max(omega_n);
 
 
-f_fast = omega_fast / (2*pi)  
-f_s    = 10 * f_fast
-Ts     =  floor(1 / f_s * 100) / 100
+f_fast = omega_fast / (2*pi);  
+f_s    = 10 * f_fast;
+Ts     =  floor(1 / f_s * 100) / 100;
 
 sys_c = ss(A, B, C, D);
 
@@ -137,60 +137,60 @@ t_discrete = (0:N-1)*Ts;
 X_discrete = zeros(N, size(Ad,1));
 U_discrete = zeros(N, 1);
 
-Q = diag([1,1,1,1])
-R = 1
+Q = diag([1,1,1,1]);
+R = 1;
 
 K = dlqr(Ad,Bd,Q,R)
 
 
-n = rows(Ad);    % = 4
-m = columns(Bd);
-
-% ---------- Weights ----------
-s = tf('s');
-
-% Continuous weights (choose as you like)
-Ws_c = (s/2 + 1)/(s + 0.01);    % sensitivity weight
-Wu_c = 0.1;                     % control weight
-Wt_c = (s + 200)/(s/200 + 1);   % complementary sensitivity weight
-
-% Discretize
-Ws = c2d(Ws_c, Ts);
-Wu = c2d(Wu_c, Ts);
-Wt = c2d(Wt_c, Ts);
-
-% ---------- Generalized Plant (Mixed Sensitivity) ----------
-
-% e = r - y  (y = x)
-% Build e-system
-E = ss(-eye(n), eye(n), eye(n), zeros(n,n), Ts);
-% inputs: [u ; r]  → outputs: e
-
-% You can treat r as exogenous (size 4)
-
-% Block partitions (standard form)
-P11 = [ Ws*E ;
-        Wu*ss([],[],[],eye(m),Ts) ;
-        Wt*Gd ];
-
-P12 = [ -Ws*Gd ;
-         Wu ;
-         Wt*Gd ];
-
-P21 = E;
-P22 = -Gd;
-
-% Full generalized plant
-P = [ P11  P12 ;
-      P21  P22 ];
-
-% ---------- H-infinity synthesis ----------
-nmeas = n;      % number of measured outputs = 4
-ncont = m;      % number of control inputs
-
-[K, CL, gamma] = hinfsyn(P, nmeas, ncont, Ts);
-
-disp("H-infinity gamma = "), disp(gamma);
+% n = rows(Ad);    % = 4
+% m = columns(Bd);
+% 
+% % ---------- Weights ----------
+% s = tf('s');
+% 
+% % Continuous weights (choose as you like)
+% Ws_c = (s/2 + 1)/(s + 0.01);    % sensitivity weight
+% Wu_c = 0.1;                     % control weight
+% Wt_c = (s + 200)/(s/200 + 1);   % complementary sensitivity weight
+% 
+% % Discretize
+% Ws = c2d(Ws_c, Ts);
+% Wu = c2d(Wu_c, Ts);
+% Wt = c2d(Wt_c, Ts);
+% 
+% % ---------- Generalized Plant (Mixed Sensitivity) ----------
+% 
+% % e = r - y  (y = x)
+% % Build e-system
+% E = ss(-eye(n), eye(n), eye(n), zeros(n,n), Ts);
+% % inputs: [u ; r]  → outputs: e
+% 
+% % You can treat r as exogenous (size 4)
+% 
+% % Block partitions (standard form)
+% P11 = [ Ws*E ;
+%         Wu*ss([],[],[],eye(m),Ts) ;
+%         Wt*Gd ];
+% 
+% P12 = [ -Ws*Gd ;
+%          Wu ;
+%          Wt*Gd ];
+% 
+% P21 = E;
+% P22 = -Gd;
+% 
+% % Full generalized plant
+% P = [ P11  P12 ;
+%       P21  P22 ];
+%
+% % ---------- H-infinity synthesis ----------
+% nmeas = n;      % number of measured outputs = 4
+% ncont = m;      % number of control inputs
+% 
+% [K, CL, gamma] = hinfsyn(P, nmeas, ncont, Ts);
+% 
+% disp("H-infinity gamma = "), disp(gamma);
 
 
 x = x_ini- x_e;
@@ -200,10 +200,10 @@ x = x_ini- x_e;
 for k = 1:N
     t_curr = (k-1)*Ts;       
     X_discrete(k,:) = x;         
-    
+
     u = u_fun(x, t_curr);    
     U_hist(k,:) = u;         
-    
+
     x = Ad*x + Bd*u;          
 end
 
@@ -214,7 +214,7 @@ X_discrete = X_discrete + repmat(x_e', size(X_discrete,1), 1);
 %% ---------------------------------------------------------------
 
 
-visualize_systems = [3]
+visualize_systems = [3];
 
   scale_angles_low = 2; 
   scale_angles_high = 4;
