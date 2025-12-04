@@ -142,6 +142,57 @@ R = 1
 
 K = dlqr(Ad,Bd,Q,R)
 
+
+n = rows(Ad);    % = 4
+m = columns(Bd);
+
+% ---------- Weights ----------
+s = tf('s');
+
+% Continuous weights (choose as you like)
+Ws_c = (s/2 + 1)/(s + 0.01);    % sensitivity weight
+Wu_c = 0.1;                     % control weight
+Wt_c = (s + 200)/(s/200 + 1);   % complementary sensitivity weight
+
+% Discretize
+Ws = c2d(Ws_c, Ts);
+Wu = c2d(Wu_c, Ts);
+Wt = c2d(Wt_c, Ts);
+
+% ---------- Generalized Plant (Mixed Sensitivity) ----------
+
+% e = r - y  (y = x)
+% Build e-system
+E = ss(-eye(n), eye(n), eye(n), zeros(n,n), Ts);
+% inputs: [u ; r]  → outputs: e
+
+% You can treat r as exogenous (size 4)
+
+% Block partitions (standard form)
+P11 = [ Ws*E ;
+        Wu*ss([],[],[],eye(m),Ts) ;
+        Wt*Gd ];
+
+P12 = [ -Ws*Gd ;
+         Wu ;
+         Wt*Gd ];
+
+P21 = E;
+P22 = -Gd;
+
+% Full generalized plant
+P = [ P11  P12 ;
+      P21  P22 ];
+
+% ---------- H-infinity synthesis ----------
+nmeas = n;      % number of measured outputs = 4
+ncont = m;      % number of control inputs
+
+[K, CL, gamma] = hinfsyn(P, nmeas, ncont, Ts);
+
+disp("H-infinity gamma = "), disp(gamma);
+
+
 x = x_ini- x_e;
 
   u_fun = @(x,t) -K*x -u_e;  
