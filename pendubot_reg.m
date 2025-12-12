@@ -16,12 +16,12 @@ function u=pendubot_reg(alpha1r,x)
 
 
 %u=3*((alpha1r-pi)-x(1))-0.3*x(3);
-% x_e = [alpha1r; pi; 0; 0];
-x_e = [alpha1r-pi; 0; 0; 0];
-% x_r = [pi; pi; 0; 0];
+x_e = [alpha1r; pi; 0; 0];
+% x_e = [alpha1r-pi; 0; 0; 0];
+x_r = [pi; pi; 0; 0];
 u_e = -1.7205;
-K = [0.7076, -5.8825, -0.2986, -0.7025];
+K = [-0.2165, -16.2534, -1.2892, -2.1864];
 
-% u = u_e - K*(x+x_r-x_e);
-u = u_e - K*(x-x_e);
+u = u_e - K*(x+x_r-x_e);
+% u = u_e - K*(x-x_e);
 % u = 0;
