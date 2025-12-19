@@ -39,15 +39,15 @@ gx = [0; 0; M\[k; 0]];
 % Linearization point
 x_e = [4/3*pi; pi; 0; 0]; 
 
-x_ref = [4/3*pi; pi; 0; 0] 
+x_ref = [4/3*pi; pi; 0; 0]; 
 
 % Solve for equilibrium input
 eqns = [x3 == 0; x4 == 0; M\(-Vm*[x3; x4]-G) + M\[k; 0]*u == 0];
-u_e = double(vpa(solve(subs(eqns, x, x_e ), u), 5))
+u_e = double(vpa(solve(subs(eqns, x, x_e ), u), 5));
 
 % Linearized system
-A = double(vpa(subs(jacobian(fx + gx*u, x), [x; u], [x_e; u_e]), 3))
-B = double(vpa(subs(jacobian(fx + gx*u, u), x, x_e), 3))
+A = double(vpa(subs(jacobian(fx + gx*u, x), [x; u], [x_e; u_e]), 3));
+B = double(vpa(subs(jacobian(fx + gx*u, u), x, x_e), 3));
 
 C = eye(n);
 D = zeros(n,1);
@@ -88,7 +88,7 @@ x_ini = [pi; pi; 0; 0];
 
 x_e = [4/3*pi; pi; 0; 0]; 
 
-x_ref = [4/3*pi; pi; 0; 0] 
+x_ref = [4/3*pi; pi; 0; 0]; 
 
 eig_A = eig(A);
 
@@ -97,16 +97,17 @@ omega_n = abs(eig_A);
 omega_fast = max(omega_n);
 
 
-f_fast = omega_fast / (2*pi)  
-f_s    = 20 * f_fast
-Ts     =  floor(1 / f_s * 100) / 100
+% f_fast = omega_fast / (2*pi);  
+% f_s    = 20 * f_fast;
+% Ts     =  floor(1 / f_s * 100) / 100;
+Ts = 0.004;
 
 
 sys_c = ss(A, B, C, D);
 
 sys_d = c2d(sys_c, Ts, 'zoh');
 
-[Ad, Bd, Cd, Dd] = ssdata(sys_d)
+[Ad, Bd, Cd, Dd] = ssdata(sys_d);
 
 N = floor(Tend/Ts) + 1;  
 t_discrete = (0:N-1)*Ts;
@@ -114,8 +115,13 @@ t_discrete = (0:N-1)*Ts;
 X_discrete = zeros(N, size(Ad,1));
 U_discrete = zeros(N, 1);
 
-Q = diag([1,1,1,1]);
-R = 1;
+max_ex = 1/(1^2);
+max_ev = 1/(1^2);
+max_ue = 1;
+%Q = diag([max_ex,max_ex,max_ev,max_ev]);
+Q = diag([1,1,10,10]);
+% R = 1/(max_ue^2);
+R = 200;
 
 K = dlqr(Ad,Bd,Q,R)
 
@@ -141,55 +147,14 @@ end
 
 %X_discrete = X_discrete + repmat(x_e', size(X_discrete,1), 1);
 
-X_discrete(end,:)
+X_discrete(end,:);
 
-maxinput = max(abs(U_discrete))
+maxinput = max(abs(U_discrete));
 
 
 %% ---------------------------------------------------------------
 %% SIMULATION OF NONLINEAR SYSTEM
 %% ---------------------------------------------------------------
-
-
-
-function u = zoh(t, x, u_fun, Ts)
-    persistent last_k u_hold;
-
-    if isempty(last_k)
-        last_k = -1;
-    end
-
-    k = floor(t / Ts);
-    if k ~= last_k
-        u_hold = u_fun(t, x);
-        last_k = k;
-    end
-
-    u = u_hold;
-end
-
-
-
-function [T_out, X_out] = simulate_with_zoh(dyn, Ts, t0, tf, x0)
-
-    T_out = t0;
-    X_out = x0(:).';
-
-    t = t0;
-    x = x0(:);
-
-    while t < tf
-        t_next = min(t + Ts, tf);
-
-        [T, X] = ode45(dyn, [t t_next], x);
-
-        T_out = [T_out; T(2:end)];
-        X_out = [X_out; X(2:end,:)];
-
-        t = t_next;
-        x = X(end,:)';
-    end
-end
 
 % Simulation parameters
 dt = 0.001;
@@ -201,11 +166,11 @@ tspan = 0:dt:Tend;
 %u_fun = @(t,x) -0.5*x(3);
 
 % C1 controller 
-u_fun = @(t,x) u_e -K*(x-x_e)
+u_fun = @(t,x) u_e -K*(x-x_e);
 
 % C2 controller
 
-u_sat = @(t,x) max(-8, min(8, u_fun(t,x)))
+u_sat = @(t,x) max(-8, min(8, u_fun(t,x)));
 
 u_zoh = @(t,x) zoh(t, x, u_sat, Ts);
 
@@ -224,13 +189,14 @@ x0 = x_ini;   % use your original initial state
 % Simulate
 [t_nonlinear, X_nonlinear] = simulate_with_zoh(dyn, Ts, 0,Tend, x_ini);
 
+
 %% ---------------------------------------------------------------
 %% PLOTTING
 %% ---------------------------------------------------------------
 
 
 
-visualize_systems = [1]
+visualize_systems = [1];
 
 
   scale_angles_low = 0; 
@@ -308,4 +274,43 @@ if any(ismember(visualize_systems, 3))
   title('Pendubot Angular Velocities (Discretized Model)')
   ylim([scale_velocities_low scale_velocities_high])   % <-- SET SCALE
 
+end
+
+function u = zoh(t, x, u_fun, Ts)
+    persistent last_k u_hold;
+
+    if isempty(last_k)
+        last_k = -1;
+    end
+
+    k = floor(t / Ts);
+    if k ~= last_k
+        u_hold = u_fun(t, x);
+        last_k = k;
+    end
+
+    u = u_hold;
+end
+
+
+
+function [T_out, X_out] = simulate_with_zoh(dyn, Ts, t0, tf, x0)
+
+    T_out = t0;
+    X_out = x0(:).';
+
+    t = t0;
+    x = x0(:);
+
+    while t < tf
+        t_next = min(t + Ts, tf);
+
+        [T, X] = ode45(dyn, [t t_next], x);
+
+        T_out = [T_out; T(2:end)];
+        X_out = [X_out; X(2:end,:)];
+
+        t = t_next;
+        x = X(end,:)';
+    end
 end
