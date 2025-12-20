@@ -49,19 +49,10 @@ B = double(vpa(subs(jacobian(fx + gx*u, u), x, x_e), 3));
 C = eye(n);
 D = zeros(n,1);
 
-% READ TABLE
-% opts = detectImportOptions("Test_1.txt");
-% opts.DecimalSeparator = ",";
-% opts.Delimiter = " ";
-% opts = setvartype(opts, "double");
-% T = readtable("Test_1.txt", opts);
-% fid = fopen("Test_1.txt","r");
-% file = textscan(fid, "%f %f %f %f %f %f %f %f","HeaderLines",1,'Delimiter',' ','MultipleDelimsAsOne',1)
-% fclose(fid);
 % === READ TABLE ===
 
 % 1) leggi tutto come testo
-fid = fopen("test_lqr.txt.txt","r","n","UTF-8");
+fid = fopen("TEST_FIRST_C.txt","r","n","UTF-8");
 txt = fread(fid,"*char")';
 fclose(fid);
 
@@ -69,12 +60,12 @@ fclose(fid);
 txt = strrep(txt, ",", ".");
 
 % 3) file temporaneo corretto
-fid = fopen("test_lqr.txt.txt","w");
+fid = fopen("TEST_FIRST_C.txt","w");
 fwrite(fid, txt);
 fclose(fid);
 
 % 4) leggi i dati numerici (salta intestazioni)
-fid = fopen("test_lqr.txt.txt","r");
+fid = fopen("TEST_FIRST_C.txt","r");
 
 data = textscan(fid, ...
     "%f %f %f %f %f %f %f %f", ...
@@ -337,19 +328,22 @@ figure(1);
 
   figure(4);
   subplot(2,1,1)
-  plot(M(:,1), M(:,4), 'LineWidth', 1.6); 
+  plot(M(:,1)*Ts, M(:,4), 'LineWidth', 1.6); 
   hold on
-  plot(M(:,1), M(:,6), 'LineWidth', 1.6);
+  plot(M(:,1)*Ts, M(:,6), 'LineWidth', 1.6);
+  % plot(M(:,1)*Ts, M(:,2), 'LineWidth', 1.6);
+  hold off
   legend('\alpha_1','\alpha_2')
   ylabel('Angle [rad]')
-  title('Pendubot Angles')
+  title('Real Pendubot Angles')
   % ylim([scale_angles_low scale_angles_high])    % <-- SET SCALE
 
   subplot(2,1,2)
-  plot(M(:,1), M(:,5), 'LineWidth', 1.6); 
+  plot(M(:,1)*Ts, M(:,5), 'LineWidth', 1.6); 
   hold on
-  plot(M(:,1), M(:,7), 'LineWidth', 1.6);
+  plot(M(:,1)*Ts, M(:,7), 'LineWidth', 1.6);
+  hold off
   legend('d\alpha_0','d\alpha_2')
   ylabel('Angular Velocity [rad/s]')
   xlabel('Time [s]')
-  title('Pendubot Angular Velocities')
+  title('Real Pendubot Angular Velocities')
